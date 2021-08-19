@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+  function girisYapildi(){
+  return request.auth.uid != null;
+  }
+    match /akislar/{document=**} {
+      allow read: if true;
+      allow write: if false;
+	}
+  
+   	match /takipciler/{document=**} {
+      allow read: if true;
+      allow write: if girisYapildi();
+	}
+  	match /takipcEdilenler/{document=**} {
+      allow read: if true;
+      allow write: if girisYapildi();
+	}
+  	match /yorumlar/{gonderiId}/gonderiYorumlari/{yorumId} {
+      allow read: if true;
+      allow write: if girisYapildi();
+      allow update,delete: if resource.data.yayinlayanId ==request.auth.uid;
+	}
+  	match /begeniler/{gonderiId}{
+    	allow read, write: if true;
+      
+      match /gonderiBegenileri/{kullaniciId} {
+      allow read: if true;
+      allow write: if girisYapildi();
+      }
+    }
+    match /duyurular/{document=**} {
+      allow read, write: if girisYapildi();  
+	}
+  match /gonderiler/{kullaniciId}/kullaniciGonderileri/ {gonderiId} {
+  		allow read: if true;
+      allow create: if girisYapildi(); 
+      allow update,delete: if request.auth.uid == kullaniciId;
+      allow update: if request.resource.data.diff(resource.data).changedKeys().hasOnly(["begeniSayisi"]);
+	}
+  match /kullanicilar/{kullaniciId}{
+  		allow read: if true;
+      allow create: if girisYapildi(); 
+      allow update,delete: if request.auth.uid == kullaniciId;
+	}
+  }
+}
